@@ -1,26 +1,98 @@
-# 🧼 Il Repository di Angelo (The Unwashed One)
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Il Laboratorio di Angelo - Biohazard Edition</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #00ff66;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 20px;
+            max-width: 800px;
+            margin: auto;
+        }
+        h1 {
+            color: #ff3333;
+            text-align: center;
+            text-shadow: 2px 2px #330000;
+        }
+        .stats {
+            border: 2px dashed #ff3333;
+            padding: 10px;
+            margin-bottom: 20px;
+            background-color: #1a0000;
+        }
+        .console {
+            background-color: #0a0a0a;
+            border: 1px solid #00ff66;
+            padding: 15px;
+            min-height: 200px;
+            margin-bottom: 20px;
+            white-space: pre-wrap;
+        }
+        .choices button {
+            background-color: #00ff66;
+            color: #121212;
+            border: none;
+            padding: 10px 15px;
+            margin: 5px 0;
+            width: 100%;
+            cursor: pointer;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            text-align: left;
+        }
+        .choices button:hover {
+            background-color: #00cc52;
+        }
+    </style>
+</head>
+<body>
 
-> *"Il codice è pulito, ma lo sviluppatore... decisamente no."*
+    <h1>☣️ IL RIFUGIO DI ANGELO: THE UNWASHED RUN ☣️</h1>
 
-Benvenuti nel repository ufficiale di **Angelo**, il leggendario sviluppatore che ha ridefinito il concetto di *clean code* applicandolo esclusivamente ai suoi script, dimenticandosi completamente di applicarlo alla sua persona.
+    <div class="stats">
+        <strong>STATO AMBIENTALE:</strong> Bio-hazard Livello 9<br>
+        <strong>RESISTENZA DI ANGELO ALL'ACQUA:</strong> 100% (Scudo di cheratina e formaggio)<br>
+        <strong>SANITA' MENTALE DEL GIOCATORE:</strong> 50%
+    </div>
 
----
+    <div class="console" id="game-output">
+Indossi una maschera antigas militare e apri lentamente la porta della stanza di Angelo. Un denorme muro di calore, vapore denso e particelle di sudore cristallizzato ti investe in pieno volto. Angelo è seduto davanti a tre monitor, illuminato solo dalla luce di un terminale con codice C++. Non fa una doccia dal 2023. La stanza respira.
 
-## 🧬 Profilo del Developer
+Cosa vuoi fare?
+    </div>
 
-| Caratteristica | Stato Attuale | Note Tecniche |
-| :--- | :--- | :--- |
-| **Nome** | Angelo | L'asciugamano è un oggetto mitologico. |
-| **Stato igienico** | 🔴 Critico (Critical Error) | Ultima doccia registrata: *Data non disponibile nel database*. |
-| **Linguaggio preferito** | C++ / Python | Scrive codice profumato, ma vive in un ecosistema a base di formaggio e muffa. |
-| **Odore dominante** | Commit non filtrato | Un misto di energia da Energy Drink e sudore da deadline. |
+    <div class="choices">
+        <button onclick="choose(1)">1. Tentare un approccio diplomatico offrendogli un deodorante spray.</button>
+        <button onclick="choose(2)">2. Attivare l'idrante antincendio d'emergenza sopra la sua testa.</button>
+        <button onclick="choose(3)">3. Urlare che i server di GitHub sono andati a fuoco per distrarlo.</button>
+    </div>
 
----
+    <script>
+        function choose(option) {
+            const output = document.getElementById("game-output");
+            const choices = document.querySelector(".choices");
 
-## ⚠️ Statistiche di Git in Tempo Reale
+            if (option === 1) {
+                output.innerText += "\n\n> Hai scelto di offrigli il deodorante.\nAngelo sibila come un vampiro alla vista della luce del sole. Il deodorante si dissolve a mezz'aria prima di toccarlo a causa dei miasmi. 'Il profumo artificiale corrompe la mia logica di programmazione!' urla.\n\nScegli la prossima mossa:";
+                choices.innerHTML = `
+                    <button onclick="choose(2)">1. Passare alle maniere forti e usare l'idrante.</button>
+                    <button onclick="choose(3)">2. Fingere un attacco hacker al suo repository.</button>
+                `;
+            } else if (option === 2) {
+                output.innerText += "\n\n> Hai aperto l'idrante antincendio!\nUn getto d'acqua ad alta pressione investe Angelo. Si sente un rumore di vetri rotti e di una fortissima reazione chimica. Angelo urla gridando 'SEGMENTATION FAULT! WATER EXCEPTION!'. La stanza si allaga di schiuma verde.\n\nHAI VINTO? O LA CASA È ESPLOSA?\n[Fine della demo]";
+                choices.innerHTML = `<button onclick="location.reload()">Ricomincia il incubo</button>`;
+            } else {
+                output.innerText += "\n\n> Hai gridato che GitHub è caduto.\nAngelo si alza di scatto dalla sedia. La sedia rimane in piedi da sola, incrostata di anidride carbonica e snack scaduti. Guarda il monitor terrorizzato, barcollando verso la porta... ed è così che lo spingi in corridoio, dritto verso il bagno!\n\nScegli l'azione finale:";
+                choices.innerHTML = `
+                    <button onclick="choose(2)">1. Chiudere a chiave la porta del bagno e aprire la doccia calda al massimo.</button>
+                `;
+            }
+        }
+    </script>
 
-```text
-commit e4f8a9b - Rimosso il deodorante dal carrello della spesa (3 anni fa)
-commit c3d2e1a - Aggiunta nuova patch per evitare il contatto con l'acqua
-commit b2a1f09 - FIX: Aperta la finestra della stanza (la stanza è svenuta)
-
+</body>
+</html>
