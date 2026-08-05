@@ -153,7 +153,6 @@
         <canvas id="gameCanvas" width="600" height="400"></canvas>
     </div>
 
-    <!-- Pulsanti touch interattivi -->
     <div class="controls-wrapper">
         <div class="control-group">
             <h3>MOVIMENTO (SU/GIÙ)</h3>
@@ -205,13 +204,11 @@
         let upgradeTimer = 0;
         let lastScoreUpgradeThreshold = 0;
 
-        // Blocco zoom da mobile
         document.addEventListener('gesturestart', (e) => e.preventDefault());
         document.addEventListener('touchmove', (e) => {
             if (e.scale !== 1) e.preventDefault();
         }, { passive: false });
 
-        // Gestione tastiera PC
         window.addEventListener("keydown", (e) => {
             let key = e.key.toLowerCase();
             if (key === 'w' || key === 's') {
@@ -246,7 +243,8 @@
                 size: 6,
                 damage: 1 + player.extraDamage,
                 color: '#8B4513',
-                isSpecial: false
+                isSpecial: false,
+                isBossWater: false
             });
         }
 
@@ -259,7 +257,8 @@
                 size: 18,
                 damage: 15,
                 color: '#ffcc00',
-                isSpecial: true
+                isSpecial: true,
+                isBossWater: false
             });
         }
 
@@ -334,9 +333,6 @@
 
             if (player.invulnerable > 0) player.invulnerable--;
 
-            // Svuotiamo i proiettili del boss subito per evitare conflitti quando muore
-            let bossDead = false;
-
             for (let i = projectiles.length - 1; i >= 0; i--) {
                 let p = projectiles[i];
                 p.x += p.dx;
@@ -369,8 +365,29 @@
                     if (distBoss < p.size + boss.size) {
                         boss.health -= p.damage;
                         hitSomething = true;
+                        
+                        // Se il boss esaurisce la vita, viene rimosso immediatamente in modo sicuro
                         if (boss.health <= 0) {
-                            bossDead = true;
+                            boss = null;
+                            score += 200;
+                            checkScoreUpgrades();
+                            
+                            projectiles = []; // Pulisce lo schermo da tutti i colpi
+                            
+                            if (currentWorld < maxWorlds) {
+                                currentWorld++;
+                                currentRoom = 1;
+                                upgradeMessage = `🏆 MONDO ${currentWorld - 1} COMPLETATO! Si sale al Mondo ${currentWorld}!`;
+                                upgradeTimer = 180;
+                                initRoom(currentWorld, currentRoom);
+                            } else {
+                                gameStarted = false;
+                                setTimeout(() => {
+                                    alert("VITTORIA FINALE! Hai completato tutti i 5 mondi e salvato Angelo!");
+                                    location.reload();
+                                }, 50);
+                            }
+                            return; // Interrompe l'aggiornamento per evitare errori di riferimento al boss nullo
                         }
                     }
                 }
@@ -382,34 +399,12 @@
                 }
             }
 
-            // Se il boss muore, resettiamo i proiettili in modo pulito e cambiamo mondo/stanza senza nessun blocco
-            if (bossDead) {
-                projectiles = []; // Pulisce istantaneamente qualsiasi proiettile attivo evitando conflitti
-                score += 200;
-                checkScoreUpgrades();
-                
-                if (currentWorld < maxWorlds) {
-                    currentWorld++;
-                    currentRoom = 1;
-                    upgradeMessage = `🏆 MONDO ${currentWorld - 1} COMPLETATO! Si sale al Mondo ${currentWorld}!`;
-                    upgradeTimer = 180;
-                    initRoom(currentWorld, currentRoom);
-                } else {
-                    gameStarted = false;
-                    setTimeout(() => {
-                        alert("VITTORIA FINALE! Hai completato tutti i 5 mondi e salvato Angelo!");
-                        location.reload();
-                    }, 50);
-                }
-                return;
-            }
-
             enemies.forEach(en => {
                 if (en.x > 200) {
                     en.x -= en.speed * 0.4;
                 }
-                if (en.y < player.y) en.y += en.speed;
-                if (en.y > player.y) en.y -= en.speed;
+                if (en.y < player.y) en.y += player.speed;
+                if (en.y > player.y) en.y -= player.speed;
 
                 let dist = Math.hypot(player.x - en.x, player.y - en.y);
                 if (dist < player.size + en.size && player.invulnerable === 0) {
@@ -435,7 +430,8 @@
                         dy: Math.sin(angle) * boss.shootSpeed,
                         size: 8,
                         color: boss.color,
-                        isBossWater: true
+                        isBossWater: true,
+                        isSpecial: false
                     });
                 }
             }
@@ -472,19 +468,16 @@
             ctx.fillStyle = "#331111";
             ctx.fillRect(canvas.width - 20, canvas.height / 2 - 30, 20, 60);
 
-            // Giocatore
             ctx.fillStyle = player.invulnerable % 10 < 5 ? "#8b5a2b" : "#ff9999";
             ctx.beginPath();
             ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
             ctx.fill();
 
-            // Occhio destro
             ctx.fillStyle = "#fff";
             ctx.beginPath();
             ctx.arc(player.x + 6, player.y, 4, 0, Math.PI * 2);
             ctx.fill();
 
-            // Nemici
             enemies.forEach(en => {
                 ctx.fillStyle = en.type === 'soap' ? "#ff66ff" : "#66a3ff";
                 ctx.beginPath();
@@ -495,7 +488,6 @@
                 ctx.fillText(en.type === 'soap' ? "SAPONE" : "ASCIUGA", en.x - 20, en.y - 20);
             });
 
-            // Boss
             if (boss) {
                 ctx.fillStyle = "#silver";
                 ctx.beginPath();
@@ -514,7 +506,6 @@
                 ctx.fillRect(boss.x - 30, boss.y - 35, Math.max(0, (boss.health / boss.maxHealth) * 60), 8);
             }
 
-            // Proiettili
             projectiles.forEach(p => {
                 ctx.fillStyle = p.color;
                 ctx.beginPath();
