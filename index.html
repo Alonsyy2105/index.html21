@@ -135,7 +135,7 @@
         <canvas id="gameCanvas" width="600" height="400"></canvas>
     </div>
 
-    <!-- Pulsanti touch interattivi (solo Su e Giù + Spara) -->
+    <!-- Pulsanti touch interattivi -->
     <div class="controls-wrapper">
         <div class="control-group">
             <h3>MOVIMENTO (SU/GIÙ)</h3>
@@ -153,7 +153,7 @@
     </div>
 
     <div class="instructions">
-        Usa i tasti su schermo o la tastiera (**W / S** per muoverti in verticale, **Spazio** per sparare a destra).
+        Usa i tasti su schermo o la tastiera (**W / S** per muoverti, **Spazio** per sparare).
     </div>
 
     <script>
@@ -171,8 +171,7 @@
             size: 20,
             speed: 4,
             hearts: 3,
-            invulnerable: 0,
-            facing: 'right'
+            invulnerable: 0
         };
 
         let keys = {};
@@ -188,7 +187,7 @@
             if (e.scale !== 1) e.preventDefault();
         }, { passive: false });
 
-        // Gestione tastiera PC (W/S per muoversi su e giù, Spazio per sparare)
+        // Gestione tastiera PC
         window.addEventListener("keydown", (e) => {
             let key = e.key.toLowerCase();
             if (key === 'w' || key === 's') {
@@ -211,7 +210,6 @@
             keys[dir] = isDown;
         }
 
-        // Spara sempre in avanti verso destra
         function shoot() {
             projectiles.push({
                 x: player.x,
@@ -229,14 +227,16 @@
             boss = null;
 
             if (roomNum < maxRooms) {
-                let enemyCount = roomNum + 2;
+                // Ridotto drasticamente il numero dei nemici (max 2 per stanza)
+                let enemyCount = 2;
                 for (let i = 0; i < enemyCount; i++) {
+                    // I nemici compaiono sempre davanti ad Angelo (sulla destra, a distanza di sicurezza)
                     enemies.push({
-                        x: 300 + Math.random() * 250,
-                        y: 50 + Math.random() * 300,
+                        x: 350 + (i * 100) + Math.random() * 50,
+                        y: 100 + Math.random() * 200,
                         size: 18,
                         type: Math.random() > 0.5 ? 'soap' : 'towel',
-                        speed: 1.0 + (roomNum * 0.2),
+                        speed: 0.8 + (roomNum * 0.15),
                         health: 2 + roomNum
                     });
                 }
@@ -245,8 +245,8 @@
                     x: 500,
                     y: 200,
                     size: 35,
-                    health: 25,
-                    maxHealth: 25,
+                    health: 20,
+                    maxHealth: 20,
                     shootTimer: 0
                 };
             }
@@ -263,11 +263,11 @@
         function update() {
             if (!gameStarted) return;
 
-            // Movimento limitato solo a Su e Giù (W e S)
+            // Movimento verticale
             if (keys['w'] && player.y > player.size) player.y -= player.speed;
             if (keys['s'] && player.y < canvas.height - player.size) player.y += player.speed;
 
-            // Mantieni Angelo fisso sulla sinistra della stanza (asse X bloccato)
+            // Asse X di Angelo bloccato a sinistra
             player.x = 80;
 
             if (player.invulnerable > 0) player.invulnerable--;
@@ -316,10 +316,14 @@
                 }
             }
 
+            // Gestione nemici: avanzano ma restano sempre davanti ad Angelo (X non scende mai sotto 200)
             enemies.forEach(en => {
-                let angle = Math.atan2(player.y - en.y, player.x - en.x);
-                en.x += Math.cos(angle) * en.speed;
-                en.y += Math.sin(angle) * en.speed;
+                // Si muovono in verticale verso Angelo ma si fermano o mantengono la distanza orizzontale
+                if (en.x > 200) {
+                    en.x -= en.speed * 0.5; // avanzano lentamente verso sinistra
+                }
+                if (en.y < player.y) en.y += en.speed;
+                if (en.y > player.y) en.y -= en.speed;
 
                 let dist = Math.hypot(player.x - en.x, player.y - en.y);
                 if (dist < player.size + en.size && player.invulnerable === 0) {
@@ -335,14 +339,14 @@
 
             if (boss) {
                 boss.shootTimer++;
-                if (boss.shootTimer > 45) {
+                if (boss.shootTimer > 55) {
                     boss.shootTimer = 0;
                     let angle = Math.atan2(player.y - boss.y, player.x - boss.x);
                     projectiles.push({
                         x: boss.x,
                         y: boss.y,
-                        dx: Math.cos(angle) * 5,
-                        dy: Math.sin(angle) * 5,
+                        dx: Math.cos(angle) * 4,
+                        dy: Math.sin(angle) * 4,
                         size: 8,
                         color: '#00ffff',
                         isBossWater: true
@@ -388,7 +392,7 @@
             ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
             ctx.fill();
 
-            // Occhio che guarda a destra
+            // Occhio destro
             ctx.fillStyle = "#fff";
             ctx.beginPath();
             ctx.arc(player.x + 6, player.y, 4, 0, Math.PI * 2);
