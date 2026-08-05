@@ -334,8 +334,7 @@
 
             if (player.invulnerable > 0) player.invulnerable--;
 
-            // Flag di controllo per evitare blocchi multipli del cambio livello in un singolo frame
-            let levelCleared = false;
+            let bossDefeatedThisFrame = false;
 
             for (let i = projectiles.length - 1; i >= 0; i--) {
                 let p = projectiles[i];
@@ -349,7 +348,6 @@
 
                 let hitSomething = false;
                 
-                // Collisioni nemici normali
                 for (let j = enemies.length - 1; j >= 0; j--) {
                     let en = enemies[j];
                     let dist = Math.hypot(p.x - en.x, p.y - en.y);
@@ -365,52 +363,50 @@
                     }
                 }
 
-                // Collisioni Boss
                 if (boss && !p.isBossWater) {
                     let distBoss = Math.hypot(p.x - boss.x, p.y - boss.y);
                     if (distBoss < p.size + boss.size) {
                         boss.health -= p.damage;
                         hitSomething = true;
-                        if (boss.health <= 0 && !levelCleared) {
-                            levelCleared = true;
-                            score += 200;
-                            checkScoreUpgrades();
-                            
-                            let nextW = currentWorld + 1;
-                            let maxW = maxWorlds;
-
-                            if (nextW <= maxW) {
-                                currentWorld = nextW;
-                                currentRoom = 1;
-                                upgradeMessage = `🏆 MONDO ${currentWorld - 1} COMPLETATO! Si sale al Mondo ${currentWorld}!`;
-                                upgradeTimer = 180;
-                                initRoom(currentWorld, currentRoom);
-                            } else {
-                                gameStarted = false;
-                                setTimeout(() => {
-                                    alert("VITTORIA FINALE! Hai completato tutti i 5 mondi e salvato Angelo!");
-                                    location.reload();
-                                }, 50);
-                            }
+                        if (boss.health <= 0) {
+                            bossDefeatedThisFrame = true;
                         }
                     }
                 }
 
-                // Gestione rimozione proiettile: 
-                // Il proiettile speciale NON viene rimosso subito se colpisce, per evitare crash o blocchi nei calcoli d'impatto multiplo ad alto danno.
                 if (hitSomething && !p.isSpecial && !p.isBossWater) {
                     projectiles.splice(i, 1);
                 } else if (p.isSpecial && hitSomething) {
-                    // Trasformiamo temporaneamente in un proiettile normale dopo il primo hit pesante così viene pulito in modo sicuro
                     p.isSpecial = false;
                 }
+            }
+
+            // Gestione separata e sicura della morte del boss per evitare blocchi ed errori di loop nei proiettili
+            if (bossDefeatedThisFrame) {
+                score += 200;
+                checkScoreUpgrades();
+                
+                if (currentWorld < maxWorlds) {
+                    currentWorld++;
+                    currentRoom = 1;
+                    upgradeMessage = `🏆 MONDO ${currentWorld - 1} COMPLETATO! Si sale al Mondo ${currentWorld}!`;
+                    upgradeTimer = 180;
+                    initRoom(currentWorld, currentRoom);
+                } else {
+                    gameStarted = false;
+                    setTimeout(() => {
+                        alert("VITTORIA FINALE! Hai completato tutti i 5 mondi e salvato Angelo!");
+                        location.reload();
+                    }, 50);
+                }
+                return; // Esce dal ciclo di update corrente per resettare la logica in modo pulito
             }
 
             enemies.forEach(en => {
                 if (en.x > 200) {
                     en.x -= en.speed * 0.4;
                 }
-                if (en.y < player.y) en.y += player.speed;
+                if (en.y < player.y) en.y += en.speed;
                 if (en.y > player.y) en.y -= en.speed;
 
                 let dist = Math.hypot(player.x - en.x, player.y - en.y);
@@ -458,7 +454,7 @@
                 }
             });
 
-            if (enemies.length === 0 && !boss && !levelCleared) {
+            if (enemies.length === 0 && !boss) {
                 currentRoom++;
                 if (currentRoom <= maxRoomsPerWorld) {
                     initRoom(currentWorld, currentRoom);
