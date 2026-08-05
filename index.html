@@ -40,14 +40,14 @@
             min-height: 220px;
             margin: 4px auto;
             border: 3px solid #ff3333;
-            background-color: #1a0a0a;
+            background-color: #222;
             box-shadow: 0 0 15px rgba(255, 51, 51, 0.4);
         }
         canvas {
             display: block;
             width: 100%;
             height: 100%;
-            background: #150808;
+            background: #2a1515;
         }
         .controls-wrapper {
             display: flex;
@@ -240,9 +240,9 @@
                 y: player.y,
                 dx: 7,
                 dy: 0,
-                size: 6,
+                size: 8,
                 damage: 1 + player.extraDamage,
-                color: '#8B4513',
+                color: '#ffdd00',
                 isSpecial: false,
                 isBossWater: false
             });
@@ -254,19 +254,19 @@
                 y: player.y,
                 dx: 10,
                 dy: 0,
-                size: 18,
+                size: 20,
                 damage: 15,
-                color: '#ffcc00',
+                color: '#00ffff',
                 isSpecial: true,
                 isBossWater: false
             });
         }
 
         function getWorldBackground(w) {
-            if (w <= 5) return "#1a0a0a"; // Bagno (1-5)
-            if (w <= 15) return "#330000"; // Inferno (6-15)
-            if (w <= 25) return "#1a2530"; // Paradiso (16-25) - Colore scuro leggibile
-            return "#3d2314"; // Paradiso di Cacca (26-35)
+            if (w <= 5) return "#2a1515"; // Bagno
+            if (w <= 15) return "#330000"; // Inferno
+            if (w <= 25) return "#152530"; // Paradiso
+            return "#422814"; // Paradiso di Cacca
         }
 
         function getWorldName(w) {
@@ -295,18 +295,18 @@
                     else if (Math.random() > 0.5) typeName = 'towel';
 
                     enemies.push({
-                        x: 350 + (i * 70) + Math.random() * 40,
+                        x: 350 + (i * 60) + Math.random() * 30,
                         y: 80 + Math.random() * 240,
-                        size: 18,
+                        size: 20,
                         type: typeName,
                         speed: 0.7 + (worldNum * 0.05) + (roomNum * 0.02),
-                        health: 1 + Math.floor(worldNum / 2)
+                        health: 2 + Math.floor(worldNum / 2)
                     });
                 }
             } else {
-                let bName = `Boss del Mondo ${worldNum}`;
+                let bName = `Boss Mondo ${worldNum}`;
                 let bColor = "#ff0000";
-                let bHealth = 20 + (worldNum * 6);
+                let bHealth = 25 + (worldNum * 8);
                 let bSpeed = 4 + (worldNum * 0.1);
 
                 if (worldNum >= 6 && worldNum <= 15) {
@@ -316,15 +316,15 @@
                     bColor = "#00ffff";
                     bName = `Divinità Celeste #${worldNum - 15}`;
                 } else if (worldNum >= 26) {
-                    bColor = "#d2691e";
+                    bColor = "#ffa500";
                     bName = `Signore Cacca #${worldNum - 25}`;
                 }
 
                 boss = {
                     name: bName,
-                    x: 500,
+                    x: 480,
                     y: 200,
-                    size: 35,
+                    size: 38,
                     health: bHealth,
                     maxHealth: bHealth,
                     shootSpeed: bSpeed,
@@ -410,7 +410,7 @@
                             } else {
                                 gameStarted = false;
                                 setTimeout(() => {
-                                    alert("🏆 VITTORIA ASSOLUTA! Hai superato tutti i 35 mondi: Bagno, Inferno, Paradiso e Paradiso di Cacca!");
+                                    alert("🏆 VITTORIA ASSOLUTA! Hai superato tutti i 35 mondi!");
                                     location.reload();
                                 }, 50);
                             }
@@ -428,10 +428,10 @@
 
             enemies.forEach(en => {
                 if (en.x > 200) {
-                    en.x -= en.speed * 0.4;
+                    en.x -= en.speed * 0.3;
                 }
-                if (en.y < player.y) en.y += player.speed;
-                if (en.y > player.y) en.y -= player.speed;
+                if (en.y < player.y) en.y += en.speed * 0.8;
+                if (en.y > player.y) en.y -= en.speed * 0.8;
 
                 let dist = Math.hypot(player.x - en.x, player.y - en.y);
                 if (dist < player.size + en.size && player.invulnerable === 0) {
@@ -439,7 +439,7 @@
                     player.invulnerable = 60;
                     if (player.hearts <= 0) {
                         gameStarted = false;
-                        alert("GAME OVER! Angelo è stato sopraffatto.");
+                        alert("GAME OVER! Angelo è stato sconfitto.");
                         location.reload();
                     }
                 }
@@ -447,7 +447,7 @@
 
             if (boss) {
                 boss.shootTimer++;
-                if (boss.shootTimer > 35) {
+                if (boss.shootTimer > 40) {
                     boss.shootTimer = 0;
                     let angle = Math.atan2(player.y - boss.y, player.x - boss.x);
                     projectiles.push({
@@ -455,8 +455,8 @@
                         y: boss.y,
                         dx: Math.cos(angle) * boss.shootSpeed,
                         dy: Math.sin(angle) * boss.shootSpeed,
-                        size: 8,
-                        color: boss.color,
+                        size: 9,
+                        color: '#ff0055',
                         isBossWater: true,
                         isSpecial: false
                     });
@@ -472,7 +472,7 @@
                         projectiles.splice(index, 1);
                         if (player.hearts <= 0) {
                             gameStarted = false;
-                            alert("GAME OVER! Il boss ti ha sconfitto.");
+                            alert("GAME OVER! Il colpo del boss ti ha distrutto.");
                             location.reload();
                         }
                     }
@@ -490,74 +490,73 @@
         }
 
         function draw() {
+            // Sfondo dinamico pulito
             ctx.fillStyle = getWorldBackground(currentWorld);
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Giocatore
-            ctx.fillStyle = player.invulnerable % 10 < 5 ? "#d2a679" : "#ff9999";
+            // DISEGNO GIOCATORE (ANGELO)
+            ctx.fillStyle = player.invulnerable % 10 < 5 ? "#ffcc99" : "#ffffff";
             ctx.beginPath();
             ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
             ctx.fill();
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = "#ff0055";
+            ctx.stroke();
 
-            ctx.fillStyle = "#fff";
+            // Occhio del giocatore
+            ctx.fillStyle = "#000";
             ctx.beginPath();
-            ctx.arc(player.x + 6, player.y, 4, 0, Math.PI * 2);
+            ctx.arc(player.x + 6, player.y - 4, 3, 0, Math.PI * 2);
             ctx.fill();
 
-            // Nemici
+            // DISEGNO NEMICI
             enemies.forEach(en => {
                 if (en.type === 'soap') ctx.fillStyle = "#ff66ff";
-                else if (en.type === 'towel') ctx.fillStyle = "#66a3ff";
-                else if (en.type === 'demon') ctx.fillStyle = "#ff3300";
-                else if (en.type === 'angel') ctx.fillStyle = "#ffff99";
-                else if (en.type === 'poop_ghost') ctx.fillStyle = "#a0522d";
+                else if (en.type === 'towel') ctx.fillStyle = "#3399ff";
+                else if (en.type === 'demon') ctx.fillStyle = "#ff2200";
+                else if (en.type === 'angel') ctx.fillStyle = "#ffff66";
+                else if (en.type === 'poop_ghost') ctx.fillStyle = "#8b4513";
 
                 ctx.beginPath();
                 ctx.arc(en.x, en.y, en.size, 0, Math.PI * 2);
                 ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = "#ffffff";
+                ctx.stroke();
 
                 ctx.fillStyle = "#ffffff";
-                ctx.font = "9px monospace";
+                ctx.font = "bold 10px monospace";
                 let label = "NEMICO";
                 if (en.type === 'soap') label = "SAPONE";
                 else if (en.type === 'towel') label = "ASCIUGA";
                 else if (en.type === 'demon') label = "DEMONE";
                 else if (en.type === 'angel') label = "CHERUBINO";
                 else if (en.type === 'poop_ghost') label = "SPIRITO 💩";
-                ctx.fillText(label, en.x - 22, en.y - 20);
+                ctx.fillText(label, en.x - 30, en.y - 24);
             });
 
-            // Boss
+            // DISEGNO BOSS
             if (boss) {
                 ctx.fillStyle = boss.color;
                 ctx.beginPath();
                 ctx.arc(boss.x, boss.y, boss.size, 0, Math.PI * 2);
                 ctx.fill();
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = "#ffffff";
+                ctx.stroke();
 
                 ctx.fillStyle = "#ffffff";
-                ctx.font = "10px monospace";
-                ctx.fillText(boss.name, boss.x - 70, boss.y - 45);
+                ctx.font = "bold 12px monospace";
+                ctx.fillText(boss.name, boss.x - 80, boss.y - 48);
 
-                ctx.fillStyle = "#550000";
-                ctx.fillRect(boss.x - 30, boss.y - 35, 60, 8);
+                // Barra della vita del boss
+                ctx.fillStyle = "#333333";
+                ctx.fillRect(boss.x - 40, boss.y - 40, 80, 10);
                 ctx.fillStyle = "#00ff66";
-                ctx.fillRect(boss.x - 30, boss.y - 35, Math.max(0, (boss.health / boss.maxHealth) * 60), 8);
+                ctx.fillRect(boss.x - 40, boss.y - 40, Math.max(0, (boss.health / boss.maxHealth) * 80), 10);
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = "#ffffff";
+                ctx.strokeRect(boss.x - 40, boss.y - 40, 80, 10);
             }
 
-            // Proiettili
-            projectiles.forEach(p => {
-                ctx.fillStyle = p.color;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                ctx.fill();
-            });
-
-            if (upgradeTimer > 0) {
-                ctx.fillStyle = "#ffff00";
-                ctx.font = "10px monospace";
-                ctx.fillText(upgradeMessage, 10, 25);
-            }
-
-            let heartsStr = "";
-            for (let i = 0; i < player.hearts; i++) heartsStr += "❤️";
-            document.getEleme
+            // DISEGNO PROIETTI
