@@ -3,96 +3,358 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Il Laboratorio di Angelo - Biohazard Edition</title>
+    <title>The Binding of Angelo: The Unwashed Dungeon</title>
     <style>
         body {
-            background-color: #121212;
+            background-color: #111;
             color: #00ff66;
             font-family: 'Courier New', Courier, monospace;
+            text-align: center;
+            margin: 0;
             padding: 20px;
-            max-width: 800px;
-            margin: auto;
+            overflow: hidden;
         }
         h1 {
             color: #ff3333;
-            text-align: center;
+            margin: 5px;
+            font-size: 24px;
             text-shadow: 2px 2px #330000;
         }
-        .stats {
-            border: 2px dashed #ff3333;
-            padding: 10px;
-            margin-bottom: 20px;
-            background-color: #1a0000;
+        #game-container {
+            position: relative;
+            width: 600px;
+            height: 400px;
+            margin: 20px auto;
+            border: 4px solid #ff3333;
+            background-color: #1a0a0a;
+            box-shadow: 0 0 20px rgba(255, 51, 51, 0.4);
         }
-        .console {
-            background-color: #0a0a0a;
-            border: 1px solid #00ff66;
-            padding: 15px;
-            min-height: 200px;
-            margin-bottom: 20px;
-            white-space: pre-wrap;
+        canvas {
+            display: block;
+            background: #150808;
         }
-        .choices button {
-            background-color: #00ff66;
-            color: #121212;
-            border: none;
-            padding: 10px 15px;
-            margin: 5px 0;
-            width: 100%;
-            cursor: pointer;
-            font-family: 'Courier New', Courier, monospace;
+        .ui {
+            font-size: 18px;
+            margin: 10px;
             font-weight: bold;
-            text-align: left;
         }
-        .choices button:hover {
-            background-color: #00cc52;
+        .instructions {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
 
-    <h1>☣️ IL RIFUGIO DI ANGELO: THE UNWASHED RUN ☣️</h1>
-
-    <div class="stats">
-        <strong>STATO AMBIENTALE:</strong> Bio-hazard Livello 9<br>
-        <strong>RESISTENZA DI ANGELO ALL'ACQUA:</strong> 100% (Scudo di cheratina e formaggio)<br>
-        <strong>SANITA' MENTALE DEL GIOCATORE:</strong> 50%
+    <h1>🧼 THE BINDING OF ANGELO: THE UNWASHED DUNGEON 🚿</h1>
+    <div class="ui">
+        Cuori: <span id="hearts">❤️❤️❤️</span> | Punteggio: <span id="score">0</span> | Stanza: <span id="room">1</span>/5
     </div>
 
-    <div class="console" id="game-output">
-Indossi una maschera antigas militare e apri lentamente la porta della stanza di Angelo. Un denorme muro di calore, vapore denso e particelle di sudore cristallizzato ti investe in pieno volto. Angelo è seduto davanti a tre monitor, illuminato solo dalla luce di un terminale con codice C++. Non fa una doccia dal 2023. La stanza respira.
-
-Cosa vuoi fare?
+    <div id="game-container">
+        <canvas id="gameCanvas" width="600" height="400"></canvas>
     </div>
 
-    <div class="choices">
-        <button onclick="choose(1)">1. Tentare un approccio diplomatico offrendogli un deodorante spray.</button>
-        <button onclick="choose(2)">2. Attivare l'idrante antincendio d'emergenza sopra la sua testa.</button>
-        <button onclick="choose(3)">3. Urlare che i server di GitHub sono andati a fuoco per distrarlo.</button>
+    <div class="instructions">
+        Usa i tasti <b>W, A, S, D</b> per muoverti. Usa le <b>Frecce Direzionali</b> per sputare palline di terra! Uccidi i nemici del bagno, pulisci le stanze e sconfiggi la Doccia Boss.
     </div>
 
     <script>
-        function choose(option) {
-            const output = document.getElementById("game-output");
-            const choices = document.querySelector(".choices");
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
 
-            if (option === 1) {
-                output.innerText += "\n\n> Hai scelto di offrigli il deodorante.\nAngelo sibila come un vampiro alla vista della luce del sole. Il deodorante si dissolve a mezz'aria prima di toccarlo a causa dei miasmi. 'Il profumo artificiale corrompe la mia logica di programmazione!' urla.\n\nScegli la prossima mossa:";
-                choices.innerHTML = `
-                    <button onclick="choose(2)">1. Passare alle maniere forti e usare l'idrante.</button>
-                    <button onclick="choose(3)">2. Fingere un attacco hacker al suo repository.</button>
-                `;
-            } else if (option === 2) {
-                output.innerText += "\n\n> Hai aperto l'idrante antincendio!\nUn getto d'acqua ad alta pressione investe Angelo. Si sente un rumore di vetri rotti e di una fortissima reazione chimica. Angelo urla gridando 'SEGMENTATION FAULT! WATER EXCEPTION!'. La stanza si allaga di schiuma verde.\n\nHAI VINTO? O LA CASA È ESPLOSA?\n[Fine della demo]";
-                choices.innerHTML = `<button onclick="location.reload()">Ricomincia il incubo</button>`;
+        let gameStarted = true;
+        let score = 0;
+        let currentRoom = 1;
+        const maxRooms = 5;
+
+        // Giocatore (Angelo)
+        let player = {
+            x: 50,
+            y: 200,
+            size: 20,
+            speed: 4,
+            hearts: 3,
+            invulnerable: 0
+        };
+
+        let keys = {};
+        let projectiles = [];
+        let enemies = [];
+        let boss = null;
+        let upgradeMessage = "";
+        let upgradeTimer = 0;
+
+        // Controlli da tastiera
+        window.addEventListener("keydown", (e) => {
+            keys[e.key.toLowerCase()] = true;
+
+            // Sparare terra con le frecce
+            if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(e.key.toLowerCase())) {
+                let dx = 0, dy = 0;
+                if (e.key === 'ArrowUp') dy = -7;
+                if (e.key === 'ArrowDown') dy = 7;
+                if (e.key === 'ArrowLeft') dx = -7;
+                if (e.key === 'ArrowRight') dx = 7;
+
+                projectiles.push({
+                    x: player.x,
+                    y: player.y,
+                    dx: dx,
+                    dy: dy,
+                    size: 6,
+                    color: '#8B4513' // Colore terra
+                });
+            }
+        });
+
+        window.addEventListener("keyup", (e) => {
+            keys[e.key.toLowerCase()] = false;
+        });
+
+        function initRoom(roomNum) {
+            enemies = [];
+            projectiles = [];
+            boss = null;
+
+            if (roomNum < maxRooms) {
+                // Stanze normali: spawn di nemici basati sul bagno (saponi, asciugamani bagnati)
+                let enemyCount = roomNum + 2;
+                for (let i = 0; i < enemyCount; i++) {
+                    enemies.push({
+                        x: 200 + Math.random() * 350,
+                        y: 50 + Math.random() * 300,
+                        size: 18,
+                        type: Math.random() > 0.5 ? 'soap' : 'towel',
+                        speed: 1.2 + (roomNum * 0.3),
+                        health: 2 + roomNum
+                    });
+                }
             } else {
-                output.innerText += "\n\n> Hai gridato che GitHub è caduto.\nAngelo si alza di scatto dalla sedia. La sedia rimane in piedi da sola, incrostata di anidride carbonica e snack scaduti. Guarda il monitor terrorizzato, barcollando verso la porta... ed è così che lo spingi in corridoio, dritto verso il bagno!\n\nScegli l'azione finale:";
-                choices.innerHTML = `
-                    <button onclick="choose(2)">1. Chiudere a chiave la porta del bagno e aprire la doccia calda al massimo.</button>
-                `;
+                // Stanza finale: Boss Doccia
+                boss = {
+                    x: 500,
+                    y: 200,
+                    size: 35,
+                    health: 25,
+                    maxHealth: 25,
+                    shootTimer: 0
+                };
             }
         }
-    </script>
 
+        function checkUpgrade() {
+            if (score > 0 && score % 150 === 0) {
+                player.speed += 0.8;
+                upgradeMessage = "✨ UPGRADE! Velocità di Angelo aumentata per via dell'accumulo di sporco!";
+                upgradeTimer = 120;
+            }
+        }
+
+        function update() {
+            if (!gameStarted) return;
+
+            // Movimento giocatore
+            if ((keys['w'] || keys['W']) && player.y > player.size) player.y -= player.speed;
+            if ((keys['s'] || keys['S']) && player.y < canvas.height - player.size) player.y += player.speed;
+            if ((keys['a'] || keys['A']) && player.x > player.size) player.x -= player.speed;
+            if ((keys['d'] || keys['D']) && player.x < canvas.width - player.size) player.x += player.speed;
+
+            if (player.invulnerable > 0) player.invulnerable--;
+
+            // Gestione proiettili di terra
+            for (let i = projectiles.length - 1; i >= 0; i--) {
+                let p = projectiles[i];
+                p.x += p.dx;
+                p.y += p.dy;
+
+                // Fuori dai bordi
+                if (p.x < 0 || p.x > canvas.width || p.y < 0 || p.y > canvas.height) {
+                    projectiles.splice(i, 1);
+                    continue;
+                }
+
+                // Collisione con i nemici normali
+                let hitEnemy = false;
+                for (let j = enemies.length - 1; j >= 0; j--) {
+                    let en = enemies[j];
+                    let dist = Math.hypot(p.x - en.x, p.y - en.y);
+                    if (dist < p.size + en.size) {
+                        en.health--;
+                        hitEnemy = true;
+                        if (en.health <= 0) {
+                            enemies.splice(j, 1);
+                            score += 50;
+                            checkUpgrade();
+                        }
+                        break;
+                    }
+                }
+
+                // Collisione con il Boss
+                if (boss) {
+                    let distBoss = Math.hypot(p.x - boss.x, p.y - boss.y);
+                    if (distBoss < p.size + boss.size) {
+                        boss.health--;
+                        hitEnemy = true;
+                        if (boss.health <= 0) {
+                            gameStarted = false;
+                            alert("VITTORIA! Angelo ha difeso la sua stanza dallo schifo dell'igiene!");
+                            location.reload();
+                        }
+                    }
+                }
+
+                if (hitEnemy) {
+                    projectiles.splice(i, 1);
+                }
+            }
+
+            // Movimento nemici normali
+            enemies.forEach(en => {
+                let angle = Math.atan2(player.y - en.y, player.x - en.x);
+                en.x += Math.cos(angle) * en.speed;
+                en.y += Math.sin(angle) * en.speed;
+
+                // Collisione con Angelo
+                let dist = Math.hypot(player.x - en.x, player.y - en.y);
+                if (dist < player.size + en.size && player.invulnerable === 0) {
+                    player.hearts--;
+                    player.invulnerable = 60; // 1 secondo di invulnerabilità
+                    if (player.hearts <= 0) {
+                        gameStarted = false;
+                        alert("GAME OVER! Angelo è stato costretto a fare la doccia ed è evaporato per lo shock igienico.");
+                        location.reload();
+                    }
+                }
+            });
+
+            // Logica Boss Doccia
+            if (boss) {
+                boss.shootTimer++;
+                // Il boss spara acqua periodicamente
+                if (boss.shootTimer > 45) {
+                    boss.shootTimer = 0;
+                    // Spara getti d'acqua verso Angelo
+                    let angle = Math.atan2(player.y - boss.y, player.x - boss.x);
+                    projectiles.push({
+                        x: boss.x,
+                        y: boss.y,
+                        dx: Math.cos(angle) * 5,
+                        dy: Math.sin(angle) * 5,
+                        size: 8,
+                        color: '#00ffff', // Acqua azzurra
+                        isBossWater: true
+                    });
+                }
+            }
+
+            // Controllo proiettili boss che colpiscono Angelo
+            projectiles.forEach((p, index) => {
+                if (p.isBossWater) {
+                    let dist = Math.hypot(player.x - p.x, player.y - p.y);
+                    if (dist < player.size + p.size && player.invulnerable === 0) {
+                        player.hearts--;
+                        player.invulnerable = 60;
+                        projectiles.splice(index, 1);
+                        if (player.hearts <= 0) {
+                            gameStarted = false;
+                            alert("GAME OVER! La doccia ti ha travolto.");
+                            location.reload();
+                        }
+                    }
+                }
+            });
+
+            // Passaggio alla stanza successiva se tutti i nemici sono morti
+            if (enemies.length === 0 && !boss) {
+                currentRoom++;
+                if (currentRoom <= maxRooms) {
+                    initRoom(currentRoom);
+                }
+            }
+
+            if (upgradeTimer > 0) upgradeTimer--;
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Disegna porte / indicatori stanza
+            ctx.fillStyle = "#331111";
+            ctx.fillRect(canvas.width - 20, canvas.height / 2 - 30, 20, 60);
+
+            // Disegna Angelo (personaggio marrone/verde per via della sporcizia)
+            ctx.fillStyle = player.invulnerable % 10 < 5 ? "#8b5a2b" : "#ff9999";
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
+            ctx.fill();
+            // Faccia di Angelo
+            ctx.fillStyle = "#fff";
+            ctx.fillRect(player.x - 6, player.y - 4, 4, 4);
+            ctx.fillRect(player.x + 2, player.y - 4, 4, 4);
+
+            // Disegna nemici
+            enemies.forEach(en => {
+                ctx.fillStyle = en.type === 'soap' ? "#ff66ff" : "#66a3ff"; // Rosa per sapone, azzurro per asciugamano
+                ctx.beginPath();
+                ctx.arc(en.x, en.y, en.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = "#000";
+                ctx.font = "10px monospace";
+                ctx.fillText(en.type === 'soap' ? "SAPONE" : "ASCIUGA", en.x - 22, en.y - 22);
+            });
+
+            // Disegna Boss Doccia
+            if (boss) {
+                ctx.fillStyle = "#silver";
+                ctx.beginPath();
+                ctx.arc(boss.x, boss.y, boss.size, 0, Math.PI * 2);
+                ctx.fill();
+                // Doccione centrale
+                ctx.fillStyle = "#00ffff";
+                ctx.fillRect(boss.x - 10, boss.y - 15, 20, 30);
+
+                // Barra vita boss
+                ctx.fillStyle = "#550000";
+                ctx.fillRect(boss.x - 30, boss.y - 50, 60, 8);
+                ctx.fillStyle = "#00ff66";
+                ctx.fillRect(boss.x - 30, boss.y - 50, (boss.health / boss.maxHealth) * 60, 8);
+            }
+
+            // Disegna proiettili (terra o acqua)
+            projectiles.forEach(p => {
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Testo di upgrade temporaneo
+            if (upgradeTimer > 0) {
+                ctx.fillStyle = "#ffff00";
+                ctx.font = "14px monospace";
+                ctx.fillText(upgradeMessage, canvas.width / 2, 30);
+            }
+
+            // Aggiorna UI HTML
+            let heartsStr = "";
+            for (let i = 0; i < player.hearts; i++) heartsStr += "❤️";
+            document.getElementById("hearts").innerText = heartsStr;
+            document.getElementById("score").innerText = score;
+            document.getElementById("room").innerText = currentRoom;
+        }
+
+        function loop() {
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        // Avvia la prima stanza
+        initRoom(currentRoom);
+        loop();
+    </script>
 </body>
 </html>
