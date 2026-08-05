@@ -334,7 +334,8 @@
 
             if (player.invulnerable > 0) player.invulnerable--;
 
-            let bossDefeatedThisFrame = false;
+            // Svuotiamo i proiettili del boss subito per evitare conflitti quando muore
+            let bossDead = false;
 
             for (let i = projectiles.length - 1; i >= 0; i--) {
                 let p = projectiles[i];
@@ -369,7 +370,7 @@
                         boss.health -= p.damage;
                         hitSomething = true;
                         if (boss.health <= 0) {
-                            bossDefeatedThisFrame = true;
+                            bossDead = true;
                         }
                     }
                 }
@@ -381,8 +382,9 @@
                 }
             }
 
-            // Gestione separata e sicura della morte del boss per evitare blocchi ed errori di loop nei proiettili
-            if (bossDefeatedThisFrame) {
+            // Se il boss muore, resettiamo i proiettili in modo pulito e cambiamo mondo/stanza senza nessun blocco
+            if (bossDead) {
+                projectiles = []; // Pulisce istantaneamente qualsiasi proiettile attivo evitando conflitti
                 score += 200;
                 checkScoreUpgrades();
                 
@@ -399,7 +401,7 @@
                         location.reload();
                     }, 50);
                 }
-                return; // Esce dal ciclo di update corrente per resettare la logica in modo pulito
+                return;
             }
 
             enemies.forEach(en => {
