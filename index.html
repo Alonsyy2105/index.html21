@@ -250,7 +250,6 @@
             });
         }
 
-        // Mossa Speciale corretta (non blocca più il gioco)
         function shootSpecial() {
             projectiles.push({
                 x: player.x,
@@ -335,19 +334,16 @@
 
             if (player.invulnerable > 0) player.invulnerable--;
 
-            // Aggiornamento proiettili con gestione sicura dei loop al contrario
             for (let i = projectiles.length - 1; i >= 0; i--) {
                 let p = projectiles[i];
                 p.x += p.dx;
                 p.y += p.dy;
 
-                // Rimozione se esce dallo schermo
                 if (p.x < 0 || p.x > canvas.width || p.y < 0 || p.y > canvas.height) {
                     projectiles.splice(i, 1);
                     continue;
                 }
 
-                // Gestione colpi contro i nemici
                 let hitSomething = false;
                 for (let j = enemies.length - 1; j >= 0; j--) {
                     let en = enemies[j];
@@ -364,7 +360,6 @@
                     }
                 }
 
-                // Gestione colpi contro il boss
                 if (boss && !p.isBossWater) {
                     let distBoss = Math.hypot(p.x - boss.x, p.y - boss.y);
                     if (distBoss < p.size + boss.size) {
@@ -373,7 +368,12 @@
                         if (boss.health <= 0) {
                             score += 200;
                             checkScoreUpgrades();
-                            if (currentWorld < maxWorlds) {
+                            
+                            // Salviamo i valori temporaneamente prima di azzerare/ricreare per evitare blocchi
+                            let nextW = currentWorld;
+                            let maxW = maxWorlds;
+
+                            if (nextW < maxW) {
                                 currentWorld++;
                                 currentRoom = 1;
                                 upgradeMessage = `🏆 MONDO ${currentWorld - 1} COMPLETATO! Si sale al Mondo ${currentWorld}!`;
@@ -381,15 +381,15 @@
                                 initRoom(currentWorld, currentRoom);
                             } else {
                                 gameStarted = false;
-                                alert("VITTORIA FINALE! Hai completato tutti i 5 mondi e salvato Angelo!");
-                                location.reload();
+                                setTimeout(() => {
+                                    alert("VITTORIA FINALE! Hai completato tutti i 5 mondi e salvato Angelo!");
+                                    location.reload();
+                                }, 50);
                             }
                         }
                     }
                 }
 
-                // Se colpisce qualcosa e NON è speciale, rimuovi il proiettile
-                // Se è speciale (Mega), attraversa i normali nemici ma infligge danno senza bloccarsi
                 if (hitSomething && !p.isSpecial && !p.isBossWater) {
                     projectiles.splice(i, 1);
                 }
