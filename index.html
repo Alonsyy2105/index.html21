@@ -24,11 +24,11 @@
         h1 {
             color: #ff3333;
             margin: 2px 0;
-            font-size: 16px;
+            font-size: 15px;
             text-shadow: 2px 2px #330000;
         }
         .ui {
-            font-size: 13px;
+            font-size: 12px;
             margin: 2px 0;
             font-weight: bold;
         }
@@ -80,9 +80,9 @@
             background-color: #333;
             color: #00ff66;
             border: 1px solid #00ff66;
-            width: 50px;
-            height: 40px;
-            font-size: 18px;
+            width: 46px;
+            height: 36px;
+            font-size: 16px;
             font-weight: bold;
             cursor: pointer;
             font-family: 'Courier New';
@@ -95,19 +95,21 @@
             background-color: #00ff66;
             color: #111;
         }
-        .shoot-btn-container {
+        .actions-container {
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
+            gap: 3px;
             height: 100%;
         }
         button.shoot-big-btn {
             background-color: #8B4513;
             color: #fff;
             border: 2px solid #00ff66;
-            width: 100px;
-            height: 45px;
-            font-size: 14px;
+            width: 95px;
+            height: 32px;
+            font-size: 12px;
             font-weight: bold;
             cursor: pointer;
             font-family: 'Courier New';
@@ -115,6 +117,22 @@
         }
         button.shoot-big-btn:active {
             background-color: #00ff66;
+            color: #111;
+        }
+        button.special-big-btn {
+            background-color: #9900cc;
+            color: #ffff00;
+            border: 2px solid #ffff00;
+            width: 95px;
+            height: 32px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: 'Courier New';
+            border-radius: 6px;
+        }
+        button.special-big-btn:active {
+            background-color: #ffff00;
             color: #111;
         }
         .instructions {
@@ -126,9 +144,9 @@
 </head>
 <body>
 
-    <h1>🧼 THE BINDING OF ANGELO: UNWASHED 🚿</h1>
+    <h1>🧼 THE BINDING OF ANGELO: 5 MONDI 🚿</h1>
     <div class="ui">
-        Cuori: <span id="hearts">❤️❤️❤️</span> | Punti: <span id="score">0</span> | Stanza: <span id="room">1</span>/5
+        Cuori: <span id="hearts">❤️❤️❤️</span> | Punti: <span id="score">0</span> | Mondo: <span id="world">1</span>/5 | Stanza: <span id="room">1</span>/7
     </div>
 
     <div id="game-container">
@@ -145,15 +163,16 @@
             </div>
         </div>
         <div class="control-group">
-            <h3>AZIONE</h3>
-            <div class="shoot-btn-container">
+            <h3>AZIONI</h3>
+            <div class="actions-container">
                 <button class="shoot-big-btn" ontouchstart="shoot()" onclick="shoot()">SPARA 💩</button>
+                <button class="special-big-btn" ontouchstart="shootSpecial()" onclick="shootSpecial()">MEGA 🚽</button>
             </div>
         </div>
     </div>
 
     <div class="instructions">
-        Usa i tasti su schermo o la tastiera (**W / S** per muoverti, **Spazio** per sparare).
+        **W/S** muoviti, **Spazio** spara, **E** mossa speciale (Mega Cacca). Upgrade ogni 500 punti!
     </div>
 
     <script>
@@ -162,8 +181,10 @@
 
         let gameStarted = true;
         let score = 0;
+        let currentWorld = 1;
         let currentRoom = 1;
-        const maxRooms = 5;
+        const maxRoomsPerWorld = 7;
+        const maxWorlds = 5;
 
         let player = {
             x: 80,
@@ -171,7 +192,9 @@
             size: 20,
             speed: 4,
             hearts: 3,
-            invulnerable: 0
+            maxHearts: 3,
+            invulnerable: 0,
+            extraDamage: 0
         };
 
         let keys = {};
@@ -180,6 +203,7 @@
         let boss = null;
         let upgradeMessage = "";
         let upgradeTimer = 0;
+        let lastScoreUpgradeThreshold = 0;
 
         // Blocco zoom da mobile
         document.addEventListener('gesturestart', (e) => e.preventDefault());
@@ -197,6 +221,9 @@
                 e.preventDefault();
                 shoot();
             }
+            if (key === 'e') {
+                shootSpecial();
+            }
         });
 
         window.addEventListener("keyup", (e) => {
@@ -210,6 +237,7 @@
             keys[dir] = isDown;
         }
 
+        // Sparo normale
         function shoot() {
             projectiles.push({
                 x: player.x,
@@ -217,57 +245,94 @@
                 dx: 7,
                 dy: 0,
                 size: 6,
+                damage: 1 + player.extraDamage,
                 color: '#8B4513'
             });
         }
 
-        function initRoom(roomNum) {
+        // Mossa Speciale: Mega Cacca pulitrice (distrugge tutto sulla linea d'aria)
+        function shootSpecial() {
+            projectiles.push({
+                x: player.x,
+                y: player.y,
+                dx: 9,
+                dy: 0,
+                size: 16,
+                damage: 10,
+                color: '#ffcc00',
+                isSpecial: true
+            });
+        }
+
+        function initRoom(worldNum, roomNum) {
             enemies = [];
             projectiles = [];
             boss = null;
 
-            if (roomNum < maxRooms) {
-                // Ridotto drasticamente il numero dei nemici (max 2 per stanza)
+            if (roomNum < maxRoomsPerWorld) {
                 let enemyCount = 2;
                 for (let i = 0; i < enemyCount; i++) {
-                    // I nemici compaiono sempre davanti ad Angelo (sulla destra, a distanza di sicurezza)
                     enemies.push({
                         x: 350 + (i * 100) + Math.random() * 50,
                         y: 100 + Math.random() * 200,
                         size: 18,
                         type: Math.random() > 0.5 ? 'soap' : 'towel',
-                        speed: 0.8 + (roomNum * 0.15),
-                        health: 2 + roomNum
+                        speed: 0.7 + (worldNum * 0.15) + (roomNum * 0.05),
+                        health: 1 + worldNum
                     });
                 }
             } else {
+                let bossData = [
+                    { name: "SPORE KING (Doccia)", color: "#00ffff", health: 20, speed: 4 },
+                    { name: "SHAMPOO TITAN", color: "#ff66ff", health: 26, speed: 5 },
+                    { name: "SPONGE TERROR", color: "#ffff00", health: 32, speed: 5 },
+                    { name: "BATHTUB BEHEMOTH", color: "#ff9933", health: 38, speed: 6 },
+                    { name: "THE ULTIMATE DRAIN", color: "#9900cc", health: 50, speed: 7 }
+                ];
+
+                let bInfo = bossData[worldNum - 1];
                 boss = {
+                    name: bInfo.name,
                     x: 500,
                     y: 200,
                     size: 35,
-                    health: 20,
-                    maxHealth: 20,
-                    shootTimer: 0
+                    health: bInfo.health,
+                    maxHealth: bInfo.health,
+                    shootSpeed: bInfo.speed,
+                    shootTimer: 0,
+                    color: bInfo.color
                 };
             }
         }
 
-        function checkUpgrade() {
-            if (score > 0 && score % 150 === 0) {
-                player.speed += 0.8;
-                upgradeMessage = "✨ UPGRADE! Velocità aumentata per lo sporco accumulato!";
-                upgradeTimer = 120;
+        // Controllo upgrade ogni 500 punti
+        function checkScoreUpgrades() {
+            if (score >= lastScoreUpgradeThreshold + 500) {
+                lastScoreUpgradeThreshold += 500;
+                
+                // Scegli casualmente tra 3 tipi di upgrade
+                let upgradeType = Math.floor(Math.random() * 3);
+                if (upgradeType === 0) {
+                    player.speed += 0.7;
+                    upgradeMessage = "🚀 UPGRADE (500 pts): Velocità di Angelo aumentata!";
+                } else if (upgradeType === 1) {
+                    player.extraDamage += 1;
+                    upgradeMessage = "💥 UPGRADE (500 pts): Potenza dei proiettili aumentata!";
+                } else {
+                    player.maxHearts++;
+                    player.hearts = player.maxHearts;
+                    upgradeMessage = "❤️ UPGRADE (500 pts): Cuore extra e vita ricaricata!";
+                }
+                upgradeTimer = 180;
             }
         }
 
         function update() {
             if (!gameStarted) return;
 
-            // Movimento verticale
             if (keys['w'] && player.y > player.size) player.y -= player.speed;
             if (keys['s'] && player.y < canvas.height - player.size) player.y += player.speed;
 
-            // Asse X di Angelo bloccato a sinistra
             player.x = 80;
 
             if (player.invulnerable > 0) player.invulnerable--;
@@ -282,17 +347,17 @@
                     continue;
                 }
 
-                let hitEnemy = false;
+                let hitSomething = false;
                 for (let j = enemies.length - 1; j >= 0; j--) {
                     let en = enemies[j];
                     let dist = Math.hypot(p.x - en.x, p.y - en.y);
                     if (dist < p.size + en.size && !p.isBossWater) {
-                        en.health--;
-                        hitEnemy = true;
+                        en.health -= p.damage;
+                        hitSomething = true;
                         if (en.health <= 0) {
                             enemies.splice(j, 1);
                             score += 50;
-                            checkUpgrade();
+                            checkScoreUpgrades();
                         }
                         break;
                     }
@@ -301,26 +366,35 @@
                 if (boss && !p.isBossWater) {
                     let distBoss = Math.hypot(p.x - boss.x, p.y - boss.y);
                     if (distBoss < p.size + boss.size) {
-                        boss.health--;
-                        hitEnemy = true;
+                        boss.health -= p.damage;
+                        hitSomething = true;
                         if (boss.health <= 0) {
-                            gameStarted = false;
-                            alert("VITTORIA! Angelo ha salvato la sua stanza.");
-                            location.reload();
+                            score += 200;
+                            checkScoreUpgrades();
+                            if (currentWorld < maxWorlds) {
+                                currentWorld++;
+                                currentRoom = 1;
+                                upgradeMessage = `🏆 MONDO ${currentWorld - 1} COMPLETATO! Si sale al Mondo ${currentWorld}!`;
+                                upgradeTimer = 180;
+                                initRoom(currentWorld, currentRoom);
+                            } else {
+                                gameStarted = false;
+                                alert("VITTORIA FINALE! Hai completato tutti i 5 mondi e salvato Angelo!");
+                                location.reload();
+                            }
                         }
                     }
                 }
 
-                if (hitEnemy && !p.isBossWater) {
+                // Se non è un colpo speciale, si distrugge al primo impatto
+                if (hitSomething && !p.isSpecial && !p.isBossWater) {
                     projectiles.splice(i, 1);
                 }
             }
 
-            // Gestione nemici: avanzano ma restano sempre davanti ad Angelo (X non scende mai sotto 200)
             enemies.forEach(en => {
-                // Si muovono in verticale verso Angelo ma si fermano o mantengono la distanza orizzontale
                 if (en.x > 200) {
-                    en.x -= en.speed * 0.5; // avanzano lentamente verso sinistra
+                    en.x -= en.speed * 0.4;
                 }
                 if (en.y < player.y) en.y += en.speed;
                 if (en.y > player.y) en.y -= en.speed;
@@ -339,16 +413,16 @@
 
             if (boss) {
                 boss.shootTimer++;
-                if (boss.shootTimer > 55) {
+                if (boss.shootTimer > 45) {
                     boss.shootTimer = 0;
                     let angle = Math.atan2(player.y - boss.y, player.x - boss.x);
                     projectiles.push({
                         x: boss.x,
                         y: boss.y,
-                        dx: Math.cos(angle) * 4,
-                        dy: Math.sin(angle) * 4,
+                        dx: Math.cos(angle) * boss.shootSpeed,
+                        dy: Math.sin(angle) * boss.shootSpeed,
                         size: 8,
-                        color: '#00ffff',
+                        color: boss.color,
                         isBossWater: true
                     });
                 }
@@ -363,7 +437,7 @@
                         projectiles.splice(index, 1);
                         if (player.hearts <= 0) {
                             gameStarted = false;
-                            alert("GAME OVER! La doccia ti ha sopraffatto.");
+                            alert("GAME OVER! Il boss ti ha sopraffatto.");
                             location.reload();
                         }
                     }
@@ -372,8 +446,8 @@
 
             if (enemies.length === 0 && !boss) {
                 currentRoom++;
-                if (currentRoom <= maxRooms) {
-                    initRoom(currentRoom);
+                if (currentRoom <= maxRoomsPerWorld) {
+                    initRoom(currentWorld, currentRoom);
                 }
             }
 
@@ -415,13 +489,17 @@
                 ctx.beginPath();
                 ctx.arc(boss.x, boss.y, boss.size, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.fillStyle = "#00ffff";
+                ctx.fillStyle = boss.color;
                 ctx.fillRect(boss.x - 10, boss.y - 15, 20, 30);
 
+                ctx.fillStyle = "#fff";
+                ctx.font = "10px monospace";
+                ctx.fillText(boss.name, boss.x - 50, boss.y - 45);
+
                 ctx.fillStyle = "#550000";
-                ctx.fillRect(boss.x - 30, boss.y - 50, 60, 8);
+                ctx.fillRect(boss.x - 30, boss.y - 35, 60, 8);
                 ctx.fillStyle = "#00ff66";
-                ctx.fillRect(boss.x - 30, boss.y - 50, (boss.health / boss.maxHealth) * 60, 8);
+                ctx.fillRect(boss.x - 30, boss.y - 35, (boss.health / boss.maxHealth) * 60, 8);
             }
 
             // Proiettili
@@ -434,14 +512,15 @@
 
             if (upgradeTimer > 0) {
                 ctx.fillStyle = "#ffff00";
-                ctx.font = "12px monospace";
-                ctx.fillText(upgradeMessage, 20, 25);
+                ctx.font = "10px monospace";
+                ctx.fillText(upgradeMessage, 10, 25);
             }
 
             let heartsStr = "";
             for (let i = 0; i < player.hearts; i++) heartsStr += "❤️";
             document.getElementById("hearts").innerText = heartsStr;
             document.getElementById("score").innerText = score;
+            document.getElementById("world").innerText = currentWorld;
             document.getElementById("room").innerText = currentRoom;
         }
 
@@ -451,7 +530,7 @@
             requestAnimationFrame(loop);
         }
 
-        initRoom(currentRoom);
+        initRoom(currentWorld, currentRoom);
         loop();
     </script>
 </body>
