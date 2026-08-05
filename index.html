@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>The Binding of Angelo: The Unwashed Dungeon</title>
+    <title>The Binding of Angelo: 35 Mondi Epici</title>
     <style>
         * {
             box-sizing: border-box;
@@ -24,11 +24,11 @@
         h1 {
             color: #ff3333;
             margin: 2px 0;
-            font-size: 15px;
+            font-size: 13px;
             text-shadow: 2px 2px #330000;
         }
         .ui {
-            font-size: 12px;
+            font-size: 11px;
             margin: 2px 0;
             font-weight: bold;
         }
@@ -144,9 +144,9 @@
 </head>
 <body>
 
-    <h1>🧼 THE BINDING OF ANGELO: 5 MONDI 🚿</h1>
+    <h1>🧼 BINDING OF ANGELO: 35 MONDI (5 Bagno + 10 Inferno + 10 Paradiso + 15 Cacca) 🚿</h1>
     <div class="ui">
-        Cuori: <span id="hearts">❤️❤️❤️</span> | Punti: <span id="score">0</span> | Mondo: <span id="world">1</span>/5 | Stanza: <span id="room">1</span>/7
+        Cuori: <span id="hearts">❤️❤️❤️</span> | Punti: <span id="score">0</span> | Mondo: <span id="world">1</span>/35 | Stanza: <span id="room">1</span>/7
     </div>
 
     <div id="game-container">
@@ -171,7 +171,7 @@
     </div>
 
     <div class="instructions">
-        **W/S** muoviti, **Spazio** spara, **E** mossa speciale (Mega Cacca). Upgrade ogni 500 punti!
+        **W/S** muoviti, **Spazio** spara, **E** mossa speciale. 35 Mondi complessivi da completare!
     </div>
 
     <script>
@@ -183,7 +183,7 @@
         let currentWorld = 1;
         let currentRoom = 1;
         const maxRoomsPerWorld = 7;
-        const maxWorlds = 5;
+        const maxWorlds = 35;
 
         let player = {
             x: 80,
@@ -214,7 +214,7 @@
             if (key === 'w' || key === 's') {
                 keys[key] = true;
             }
-            if (e.code === 'Space') {
+            if (e.code === 'Space' || e.key === ' ') {
                 e.preventDefault();
                 shoot();
             }
@@ -262,62 +262,92 @@
             });
         }
 
+        function getWorldBackground(w) {
+            if (w <= 5) return "#1a0a0a"; // Bagno (1-5)
+            if (w <= 15) return "#330000"; // Inferno (6-15)
+            if (w <= 25) return "#ffffff"; // Paradiso (16-25)
+            return "#3d2314"; // Paradiso di Cacca (26-35)
+        }
+
+        function getWorldName(w) {
+            if (w === 1) return "1. Doccia Infetta";
+            if (w === 2) return "2. Shampoo Titanico";
+            if (w === 3) return "3. Spugne Abissali";
+            if (w === 4) return "4. Vasca di Fuoco";
+            if (w === 5) return "5. Scarico Principale";
+            if (w >= 6 && w <= 15) return `${w}. Inferno Schiumoso (${w - 5}/10)`;
+            if (w >= 16 && w <= 25) return `${w}. Paradiso Celeste (${w - 15}/10)`;
+            return `${w}. Paradiso di Cacca Supremo (${w - 25}/15)`;
+        }
+
         function initRoom(worldNum, roomNum) {
             enemies = [];
             projectiles = [];
             boss = null;
 
             if (roomNum < maxRoomsPerWorld) {
-                let enemyCount = 2;
+                let enemyCount = 2 + Math.floor(worldNum / 5);
                 for (let i = 0; i < enemyCount; i++) {
+                    let typeName = 'soap';
+                    if (worldNum >= 6 && worldNum <= 15) typeName = 'demon';
+                    else if (worldNum >= 16 && worldNum <= 25) typeName = 'angel';
+                    else if (worldNum >= 26) typeName = 'poop_ghost';
+                    else if (Math.random() > 0.5) typeName = 'towel';
+
                     enemies.push({
-                        x: 350 + (i * 100) + Math.random() * 50,
-                        y: 100 + Math.random() * 200,
+                        x: 350 + (i * 70) + Math.random() * 40,
+                        y: 80 + Math.random() * 240,
                         size: 18,
-                        type: Math.random() > 0.5 ? 'soap' : 'towel',
-                        speed: 0.7 + (worldNum * 0.15) + (roomNum * 0.05),
-                        health: 1 + worldNum
+                        type: typeName,
+                        speed: 0.7 + (worldNum * 0.05) + (roomNum * 0.02),
+                        health: 1 + Math.floor(worldNum / 2)
                     });
                 }
             } else {
-                let bossData = [
-                    { name: "SPORE KING (Doccia)", color: "#00ffff", health: 25, speed: 4 },
-                    { name: "SHAMPOO TITAN", color: "#ff66ff", health: 35, speed: 5 },
-                    { name: "SPONGE TERROR", color: "#ffff00", health: 45, speed: 5 },
-                    { name: "BATHTUB BEHEMOTH", color: "#ff9933", health: 55, speed: 6 },
-                    { name: "THE ULTIMATE DRAIN", color: "#9900cc", health: 70, speed: 7 }
-                ];
+                let bName = `Boss del Mondo ${worldNum}`;
+                let bColor = "#ff0000";
+                let bHealth = 20 + (worldNum * 6);
+                let bSpeed = 4 + (worldNum * 0.1);
 
-                let bInfo = bossData[worldNum - 1];
+                if (worldNum >= 6 && worldNum <= 15) {
+                    bColor = "#cc0000";
+                    bName = `Arcidemone di Schiuma #${worldNum - 5}`;
+                } else if (worldNum >= 16 && worldNum <= 25) {
+                    bColor = "#00ffff";
+                    bName = `Divinità Celeste #${worldNum - 15}`;
+                } else if (worldNum >= 26) {
+                    bColor = "#d2691e";
+                    bName = `Signore Supremo di Cacca #${worldNum - 25}`;
+                }
+
                 boss = {
-                    name: bInfo.name,
+                    name: bName,
                     x: 500,
                     y: 200,
                     size: 35,
-                    health: bInfo.health,
-                    maxHealth: bInfo.health,
-                    shootSpeed: bInfo.speed,
+                    health: bHealth,
+                    maxHealth: bHealth,
+                    shootSpeed: bSpeed,
                     shootTimer: 0,
-                    color: bInfo.color
+                    color: bColor
                 };
             }
         }
 
         function checkScoreUpgrades() {
-            if (score >= lastScoreUpgradeThreshold + 500) {
-                lastScoreUpgradeThreshold += 500;
-                
+            if (score >= lastScoreUpgradeThreshold + 400) {
+                lastScoreUpgradeThreshold += 400;
                 let upgradeType = Math.floor(Math.random() * 3);
                 if (upgradeType === 0) {
-                    player.speed += 0.7;
-                    upgradeMessage = "🚀 UPGRADE (500 pts): Velocità aumentata!";
+                    player.speed += 0.5;
+                    upgradeMessage = "🚀 UPGRADE: Velocità aumentata!";
                 } else if (upgradeType === 1) {
                     player.extraDamage += 1;
-                    upgradeMessage = "💥 UPGRADE (500 pts): Potenza aumentata!";
+                    upgradeMessage = "💥 UPGRADE: Potenza aumentata!";
                 } else {
                     player.maxHearts++;
                     player.hearts = player.maxHearts;
-                    upgradeMessage = "❤️ UPGRADE (500 pts): Cuore extra!";
+                    upgradeMessage = "❤️ UPGRADE: Cuore extra!";
                 }
                 upgradeTimer = 180;
             }
@@ -330,7 +360,6 @@
             if (keys['s'] && player.y < canvas.height - player.size) player.y += player.speed;
 
             player.x = 80;
-
             if (player.invulnerable > 0) player.invulnerable--;
 
             for (let i = projectiles.length - 1; i >= 0; i--) {
@@ -366,28 +395,26 @@
                         boss.health -= p.damage;
                         hitSomething = true;
                         
-                        // Se il boss esaurisce la vita, viene rimosso immediatamente in modo sicuro
                         if (boss.health <= 0) {
                             boss = null;
-                            score += 200;
+                            score += 300;
                             checkScoreUpgrades();
-                            
-                            projectiles = []; // Pulisce lo schermo da tutti i colpi
+                            projectiles = [];
                             
                             if (currentWorld < maxWorlds) {
                                 currentWorld++;
                                 currentRoom = 1;
-                                upgradeMessage = `🏆 MONDO ${currentWorld - 1} COMPLETATO! Si sale al Mondo ${currentWorld}!`;
+                                upgradeMessage = `🏆 Superato! Accesso a: ${getWorldName(currentWorld)}`;
                                 upgradeTimer = 180;
                                 initRoom(currentWorld, currentRoom);
                             } else {
                                 gameStarted = false;
                                 setTimeout(() => {
-                                    alert("VITTORIA FINALE! Hai completato tutti i 5 mondi e salvato Angelo!");
+                                    alert("🏆 VITTORIA ASSOLUTA! Hai superato tutti i 35 mondi: Bagno, Inferno, Paradiso e Paradiso di Cacca!");
                                     location.reload();
                                 }, 50);
                             }
-                            return; // Interrompe l'aggiornamento per evitare errori di riferimento al boss nullo
+                            return;
                         }
                     }
                 }
@@ -403,8 +430,8 @@
                 if (en.x > 200) {
                     en.x -= en.speed * 0.4;
                 }
-                if (en.y < player.y) en.y += player.speed;
-                if (en.y > player.y) en.y -= player.speed;
+                if (en.y < player.y) en.y += en.speed;
+                if (en.y > player.y) en.y -= en.speed;
 
                 let dist = Math.hypot(player.x - en.x, player.y - en.y);
                 if (dist < player.size + en.size && player.invulnerable === 0) {
@@ -412,7 +439,7 @@
                     player.invulnerable = 60;
                     if (player.hearts <= 0) {
                         gameStarted = false;
-                        alert("GAME OVER! Angelo è stato lavato.");
+                        alert("GAME OVER! Angelo è stato sopraffatto.");
                         location.reload();
                     }
                 }
@@ -420,7 +447,7 @@
 
             if (boss) {
                 boss.shootTimer++;
-                if (boss.shootTimer > 45) {
+                if (boss.shootTimer > 35) {
                     boss.shootTimer = 0;
                     let angle = Math.atan2(player.y - boss.y, player.x - boss.x);
                     projectiles.push({
@@ -445,7 +472,7 @@
                         projectiles.splice(index, 1);
                         if (player.hearts <= 0) {
                             gameStarted = false;
-                            alert("GAME OVER! Il boss ti ha sopraffatto.");
+                            alert("GAME OVER! Il boss ti ha sconfitto.");
                             location.reload();
                         }
                     }
@@ -463,11 +490,18 @@
         }
 
         function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = getWorldBackground(currentWorld);
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            ctx.fillStyle = "#331111";
-            ctx.fillRect(canvas.width - 20, canvas.height / 2 - 30, 20, 60);
+            if (currentWorld >= 16 && currentWorld <= 25) {
+                ctx.fillStyle = "rgba(255, 255, 200, 0.05)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            } else if (currentWorld >= 26) {
+                ctx.fillStyle = "rgba(139, 69, 19, 0.15)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
 
+            // Giocatore
             ctx.fillStyle = player.invulnerable % 10 < 5 ? "#8b5a2b" : "#ff9999";
             ctx.beginPath();
             ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
@@ -478,27 +512,39 @@
             ctx.arc(player.x + 6, player.y, 4, 0, Math.PI * 2);
             ctx.fill();
 
+            // Nemici
             enemies.forEach(en => {
-                ctx.fillStyle = en.type === 'soap' ? "#ff66ff" : "#66a3ff";
+                if (en.type === 'soap') ctx.fillStyle = "#ff66ff";
+                else if (en.type === 'towel') ctx.fillStyle = "#66a3ff";
+                else if (en.type === 'demon') ctx.fillStyle = "#ff3300";
+                else if (en.type === 'angel') ctx.fillStyle = "#ffff99";
+                else if (en.type === 'poop_ghost') ctx.fillStyle = "#a0522d";
+
                 ctx.beginPath();
                 ctx.arc(en.x, en.y, en.size, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.fillStyle = "#fff";
-                ctx.font = "9px monospace";
-                ctx.fillText(en.type === 'soap' ? "SAPONE" : "ASCIUGA", en.x - 20, en.y - 20);
+
+                ctx.fillStyle = (currentWorld >= 16 && currentWorld <= 25) ? "#333" : "#fff";
+                ctx.font = "8px monospace";
+                let label = "NEMICO";
+                if (en.type === 'soap') label = "SAPONE";
+                else if (en.type === 'towel') label = "ASCIUGA";
+                else if (en.type === 'demon') label = "DEMONE";
+                else if (en.type === 'angel') label = "CHERUBINO";
+                else if (en.type === 'poop_ghost') label = "SPIRITO 💩";
+                ctx.fillText(label, en.x - 22, en.y - 20);
             });
 
+            // Boss
             if (boss) {
-                ctx.fillStyle = "#silver";
+                ctx.fillStyle = boss.color;
                 ctx.beginPath();
                 ctx.arc(boss.x, boss.y, boss.size, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.fillStyle = boss.color;
-                ctx.fillRect(boss.x - 10, boss.y - 15, 20, 30);
 
-                ctx.fillStyle = "#fff";
-                ctx.font = "10px monospace";
-                ctx.fillText(boss.name, boss.x - 50, boss.y - 45);
+                ctx.fillStyle = (currentWorld >= 16 && currentWorld <= 25) ? "#333" : "#fff";
+                ctx.font = "8px monospace";
+                ctx.fillText(boss.name, boss.x - 70, boss.y - 45);
 
                 ctx.fillStyle = "#550000";
                 ctx.fillRect(boss.x - 30, boss.y - 35, 60, 8);
@@ -506,35 +552,7 @@
                 ctx.fillRect(boss.x - 30, boss.y - 35, Math.max(0, (boss.health / boss.maxHealth) * 60), 8);
             }
 
+            // Proiettili
             projectiles.forEach(p => {
                 ctx.fillStyle = p.color;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                ctx.fill();
-            });
-
-            if (upgradeTimer > 0) {
-                ctx.fillStyle = "#ffff00";
-                ctx.font = "10px monospace";
-                ctx.fillText(upgradeMessage, 10, 25);
-            }
-
-            let heartsStr = "";
-            for (let i = 0; i < player.hearts; i++) heartsStr += "❤️";
-            document.getElementById("hearts").innerText = heartsStr;
-            document.getElementById("score").innerText = score;
-            document.getElementById("world").innerText = currentWorld;
-            document.getElementById("room").innerText = currentRoom;
-        }
-
-        function loop() {
-            update();
-            draw();
-            requestAnimationFrame(loop);
-        }
-
-        initRoom(currentWorld, currentRoom);
-        loop();
-    </script>
-</body>
-</html>
+  
