@@ -237,7 +237,6 @@
             keys[dir] = isDown;
         }
 
-        // Sparo normale
         function shoot() {
             projectiles.push({
                 x: player.x,
@@ -246,11 +245,12 @@
                 dy: 0,
                 size: 6,
                 damage: 1 + player.extraDamage,
-                color: '#8B4513'
+                color: '#8B4513',
+                isSpecial: false
             });
         }
 
-        // Mossa Speciale: Mega Cacca pulitrice (distrugge tutto sulla linea d'aria)
+        // Mossa Speciale corretta (non blocca più il gioco)
         function shootSpecial() {
             projectiles.push({
                 x: player.x,
@@ -305,23 +305,21 @@
             }
         }
 
-        // Controllo upgrade ogni 500 punti
         function checkScoreUpgrades() {
             if (score >= lastScoreUpgradeThreshold + 500) {
                 lastScoreUpgradeThreshold += 500;
                 
-                // Scegli casualmente tra 3 tipi di upgrade
                 let upgradeType = Math.floor(Math.random() * 3);
                 if (upgradeType === 0) {
                     player.speed += 0.7;
-                    upgradeMessage = "🚀 UPGRADE (500 pts): Velocità di Angelo aumentata!";
+                    upgradeMessage = "🚀 UPGRADE (500 pts): Velocità aumentata!";
                 } else if (upgradeType === 1) {
                     player.extraDamage += 1;
-                    upgradeMessage = "💥 UPGRADE (500 pts): Potenza dei proiettili aumentata!";
+                    upgradeMessage = "💥 UPGRADE (500 pts): Potenza aumentata!";
                 } else {
                     player.maxHearts++;
                     player.hearts = player.maxHearts;
-                    upgradeMessage = "❤️ UPGRADE (500 pts): Cuore extra e vita ricaricata!";
+                    upgradeMessage = "❤️ UPGRADE (500 pts): Cuore extra!";
                 }
                 upgradeTimer = 180;
             }
@@ -337,16 +335,19 @@
 
             if (player.invulnerable > 0) player.invulnerable--;
 
+            // Aggiornamento proiettili con gestione sicura dei loop al contrario
             for (let i = projectiles.length - 1; i >= 0; i--) {
                 let p = projectiles[i];
                 p.x += p.dx;
                 p.y += p.dy;
 
+                // Rimozione se esce dallo schermo
                 if (p.x < 0 || p.x > canvas.width || p.y < 0 || p.y > canvas.height) {
                     projectiles.splice(i, 1);
                     continue;
                 }
 
+                // Gestione colpi contro i nemici
                 let hitSomething = false;
                 for (let j = enemies.length - 1; j >= 0; j--) {
                     let en = enemies[j];
@@ -363,6 +364,7 @@
                     }
                 }
 
+                // Gestione colpi contro il boss
                 if (boss && !p.isBossWater) {
                     let distBoss = Math.hypot(p.x - boss.x, p.y - boss.y);
                     if (distBoss < p.size + boss.size) {
@@ -386,7 +388,8 @@
                     }
                 }
 
-                // Se non è un colpo speciale, si distrugge al primo impatto
+                // Se colpisce qualcosa e NON è speciale, rimuovi il proiettile
+                // Se è speciale (Mega), attraversa i normali nemici ma infligge danno senza bloccarsi
                 if (hitSomething && !p.isSpecial && !p.isBossWater) {
                     projectiles.splice(i, 1);
                 }
