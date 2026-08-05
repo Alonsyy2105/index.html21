@@ -265,7 +265,7 @@
         function getWorldBackground(w) {
             if (w <= 5) return "#1a0a0a"; // Bagno (1-5)
             if (w <= 15) return "#330000"; // Inferno (6-15)
-            if (w <= 25) return "#ffffff"; // Paradiso (16-25)
+            if (w <= 25) return "#1a2530"; // Paradiso (16-25) - Colore scuro leggibile
             return "#3d2314"; // Paradiso di Cacca (26-35)
         }
 
@@ -310,14 +310,14 @@
                 let bSpeed = 4 + (worldNum * 0.1);
 
                 if (worldNum >= 6 && worldNum <= 15) {
-                    bColor = "#cc0000";
-                    bName = `Arcidemone di Schiuma #${worldNum - 5}`;
+                    bColor = "#ff3333";
+                    bName = `Arcidemone #${worldNum - 5}`;
                 } else if (worldNum >= 16 && worldNum <= 25) {
                     bColor = "#00ffff";
                     bName = `Divinità Celeste #${worldNum - 15}`;
                 } else if (worldNum >= 26) {
                     bColor = "#d2691e";
-                    bName = `Signore Supremo di Cacca #${worldNum - 25}`;
+                    bName = `Signore Cacca #${worldNum - 25}`;
                 }
 
                 boss = {
@@ -430,8 +430,8 @@
                 if (en.x > 200) {
                     en.x -= en.speed * 0.4;
                 }
-                if (en.y < player.y) en.y += en.speed;
-                if (en.y > player.y) en.y -= en.speed;
+                if (en.y < player.y) en.y += player.speed;
+                if (en.y > player.y) en.y -= player.speed;
 
                 let dist = Math.hypot(player.x - en.x, player.y - en.y);
                 if (dist < player.size + en.size && player.invulnerable === 0) {
@@ -493,16 +493,8 @@
             ctx.fillStyle = getWorldBackground(currentWorld);
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            if (currentWorld >= 16 && currentWorld <= 25) {
-                ctx.fillStyle = "rgba(255, 255, 200, 0.05)";
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-            } else if (currentWorld >= 26) {
-                ctx.fillStyle = "rgba(139, 69, 19, 0.15)";
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-            }
-
             // Giocatore
-            ctx.fillStyle = player.invulnerable % 10 < 5 ? "#8b5a2b" : "#ff9999";
+            ctx.fillStyle = player.invulnerable % 10 < 5 ? "#d2a679" : "#ff9999";
             ctx.beginPath();
             ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
             ctx.fill();
@@ -524,8 +516,8 @@
                 ctx.arc(en.x, en.y, en.size, 0, Math.PI * 2);
                 ctx.fill();
 
-                ctx.fillStyle = (currentWorld >= 16 && currentWorld <= 25) ? "#333" : "#fff";
-                ctx.font = "8px monospace";
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "9px monospace";
                 let label = "NEMICO";
                 if (en.type === 'soap') label = "SAPONE";
                 else if (en.type === 'towel') label = "ASCIUGA";
@@ -542,8 +534,8 @@
                 ctx.arc(boss.x, boss.y, boss.size, 0, Math.PI * 2);
                 ctx.fill();
 
-                ctx.fillStyle = (currentWorld >= 16 && currentWorld <= 25) ? "#333" : "#fff";
-                ctx.font = "8px monospace";
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "10px monospace";
                 ctx.fillText(boss.name, boss.x - 70, boss.y - 45);
 
                 ctx.fillStyle = "#550000";
@@ -555,4 +547,17 @@
             // Proiettili
             projectiles.forEach(p => {
                 ctx.fillStyle = p.color;
-  
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            if (upgradeTimer > 0) {
+                ctx.fillStyle = "#ffff00";
+                ctx.font = "10px monospace";
+                ctx.fillText(upgradeMessage, 10, 25);
+            }
+
+            let heartsStr = "";
+            for (let i = 0; i < player.hearts; i++) heartsStr += "❤️";
+            document.getEleme
