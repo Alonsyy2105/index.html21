@@ -7,7 +7,6 @@
     <style>
         * {
             box-sizing: border-box;
-            /* Blocca la selezione di testo e lo zoom/gesture tattili indesiderate */
             user-select: none;
             -webkit-user-select: none;
             -webkit-touch-callout: none;
@@ -19,27 +18,27 @@
             text-align: center;
             margin: 0;
             padding: 5px;
-            overflow: hidden; /* Evita scroll della pagina sul cellulare */
-            touch-action: none; /* Impedisce lo zoom e il pinch to zoom nativi */
+            overflow: hidden;
+            touch-action: none;
         }
         h1 {
             color: #ff3333;
             margin: 2px 0;
-            font-size: 18px;
+            font-size: 16px;
             text-shadow: 2px 2px #330000;
         }
         .ui {
-            font-size: 14px;
+            font-size: 13px;
             margin: 2px 0;
             font-weight: bold;
         }
         #game-container {
             position: relative;
             width: 100%;
-            max-width: 600px;
-            height: 35vh;
-            min-height: 250px;
-            margin: 5px auto;
+            max-width: 500px;
+            height: 32vh;
+            min-height: 220px;
+            margin: 4px auto;
             border: 3px solid #ff3333;
             background-color: #1a0a0a;
             box-shadow: 0 0 15px rgba(255, 51, 51, 0.4);
@@ -50,33 +49,32 @@
             height: 100%;
             background: #150808;
         }
-        .controls-panel {
+        .controls-wrapper {
             display: flex;
             justify-content: space-around;
-            align-items: center;
             width: 100%;
-            max-width: 600px;
-            margin: 5px auto;
-            gap: 10px;
+            max-width: 500px;
+            margin: 4px auto;
+            gap: 5px;
         }
         .control-group {
             background: #222;
-            padding: 5px;
+            padding: 4px;
             border: 1px solid #00ff66;
             border-radius: 5px;
             flex: 1;
         }
         .control-group h3 {
-            margin: 0 0 3px 0;
-            font-size: 11px;
+            margin: 0 0 2px 0;
+            font-size: 10px;
             color: #ffff00;
         }
         .pad-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 3px;
+            gap: 2px;
             justify-items: center;
-            max-width: 140px;
+            max-width: 130px;
             margin: 0 auto;
         }
         button.ctrl-btn {
@@ -99,9 +97,9 @@
             color: #111;
         }
         .instructions {
-            font-size: 10px;
+            font-size: 9px;
             color: #aaa;
-            margin-top: 3px;
+            margin-top: 2px;
         }
     </style>
 </head>
@@ -116,34 +114,34 @@
         <canvas id="gameCanvas" width="600" height="400"></canvas>
     </div>
 
-    <!-- Pulsanti di controllo ottimizzati per touch e desktop -->
-    <div class="controls-panel">
+    <!-- Pulsanti touch interattivi per telefono/tablet -->
+    <div class="controls-wrapper">
         <div class="control-group">
             <h3>MOVIMENTO</h3>
             <div class="pad-grid">
                 <div></div>
-                <button class="ctrl-btn" ontstart="startMove('w')" ontend="stopMove('w')" onmousedown="startMove('w')" onmouseup="stopMove('w')" onmouseleave="stopMove('w')">W</button>
+                <button class="ctrl-btn" ontouchstart="setMove('w', true)" ontouchend="setMove('w', false)" onmousedown="setMove('w', true)" onmouseup="setMove('w', false)" onmouseleave="setMove('w', false)">⬆️</button>
                 <div></div>
-                <button class="ctrl-btn" ontstart="startMove('a')" ontend="stopMove('a')" onmousedown="startMove('a')" onmouseup="stopMove('a')" onmouseleave="stopMove('a')">A</button>
-                <button class="ctrl-btn" ontstart="startMove('s')" ontend="stopMove('s')" onmousedown="startMove('s')" onmouseup="stopMove('s')" onmouseleave="stopMove('s')">S</button>
-                <button class="ctrl-btn" ontstart="startMove('d')" ontend="stopMove('d')" onmousedown="startMove('d')" onmouseup="stopMove('d')" onmouseleave="stopMove('d')">D</button>
+                <button class="ctrl-btn" ontouchstart="setMove('a', true)" ontouchend="setMove('a', false)" onmousedown="setMove('a', true)" onmouseup="setMove('a', false)" onmouseleave="setMove('a', false)">⬅️</button>
+                <button class="ctrl-btn" ontouchstart="setMove('s', true)" ontouchend="setMove('s', false)" onmousedown="setMove('s', true)" onmouseup="setMove('s', false)" onmouseleave="setMove('s', false)">⬇️</button>
+                <button class="ctrl-btn" ontouchstart="setMove('d', true)" ontouchend="setMove('d', false)" onmousedown="setMove('d', true)" onmouseup="setMove('d', false)" onmouseleave="setMove('d', false)">➡️</button>
             </div>
         </div>
         <div class="control-group">
             <h3>SPARA TERRA</h3>
             <div class="pad-grid">
                 <div></div>
-                <button class="ctrl-btn" onclick="shoot('ArrowUp')">⬆️</button>
+                <button class="ctrl-btn" ontouchstart="shoot('ArrowUp')" onclick="shoot('ArrowUp')">⬆️</button>
                 <div></div>
-                <button class="ctrl-btn" onclick="shoot('ArrowLeft')">⬅️</button>
-                <button class="ctrl-btn" onclick="shoot('ArrowDown')">⬇️</button>
-                <button class="ctrl-btn" onclick="shoot('ArrowRight')">➡️</button>
+                <button class="ctrl-btn" ontouchstart="shoot('ArrowLeft')" onclick="shoot('ArrowLeft')">⬅️</button>
+                <button class="ctrl-btn" ontouchstart="shoot('ArrowDown')" onclick="shoot('ArrowDown')">⬇️</button>
+                <button class="ctrl-btn" ontouchstart="shoot('ArrowRight')" onclick="shoot('ArrowRight')">➡️</button>
             </div>
         </div>
     </div>
 
     <div class="instructions">
-        Usa <b>WASD</b> per muoverti e le <b>Frecce</b> (o i pulsanti) per sputare terra.
+        Usa i tasti su schermo o la tastiera (WASD + Frecce su PC).
     </div>
 
     <script>
@@ -155,7 +153,6 @@
         let currentRoom = 1;
         const maxRooms = 5;
 
-        // Giocatore (Angelo)
         let player = {
             x: 50,
             y: 200,
@@ -172,21 +169,18 @@
         let upgradeMessage = "";
         let upgradeTimer = 0;
 
-        // Blocco totale di qualsiasi zoom tramite gesti tattili del browser
-        document.addEventListener('gesturestart', function (e) {
-            e.preventDefault();
-        });
-        document.addEventListener('touchmove', function (e) {
-            if (e.scale !== 1) {
-                e.preventDefault();
-            }
+        // Blocco zoom da mobile
+        document.addEventListener('gesturestart', (e) => e.preventDefault());
+        document.addEventListener('touchmove', (e) => {
+            if (e.scale !== 1) e.preventDefault();
         }, { passive: false });
 
-        // Ascoltatori Tastiera
+        // Gestione tastiera PC (WASD per muoversi, Frecce per sparare)
         window.addEventListener("keydown", (e) => {
             let key = e.key.toLowerCase();
-            keys[key] = true;
-
+            if (['w', 'a', 's', 'd'].includes(key)) {
+                keys[key] = true;
+            }
             if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
                 e.preventDefault();
                 shoot(e.key);
@@ -194,19 +188,24 @@
         });
 
         window.addEventListener("keyup", (e) => {
-            keys[e.key.toLowerCase()] = false;
+            let key = e.key.toLowerCase();
+            if (['w', 'a', 's', 'd'].includes(key)) {
+                keys[key] = false;
+            }
         });
 
-        // Controlli di movimento (supporto sia mouse che touch)
-        function startMove(k) { keys[k] = true; }
-        function stopMove(k) { keys[k] = false; }
+        // Gestione pulsanti touch/mouse
+        function setMove(dir, isDown) {
+            keys[dir] = isDown;
+        }
 
         function shoot(direction) {
             let dx = 0, dy = 0;
-            if (direction === 'ArrowUp' || direction === 'arrowup') dy = -7;
-            if (direction === 'ArrowDown' || direction === 'arrowdown') dy = 7;
-            if (direction === 'ArrowLeft' || direction === 'arrowleft') dx = -7;
-            if (direction === 'ArrowRight' || direction === 'arrowright') dx = 7;
+            let dirLower = direction.toLowerCase();
+            if (dirLower.includes('up')) dy = -7;
+            if (dirLower.includes('down')) dy = 7;
+            if (dirLower.includes('left')) dx = -7;
+            if (dirLower.includes('right')) dx = 7;
 
             projectiles.push({
                 x: player.x,
@@ -258,10 +257,10 @@
         function update() {
             if (!gameStarted) return;
 
-            if ((keys['w'] || keys['W']) && player.y > player.size) player.y -= player.speed;
-            if ((keys['s'] || keys['S']) && player.y < canvas.height - player.size) player.y += player.speed;
-            if ((keys['a'] || keys['A']) && player.x > player.size) player.x -= player.speed;
-            if ((keys['d'] || keys['D']) && player.x < canvas.width - player.size) player.x += player.speed;
+            if (keys['w'] && player.y > player.size) player.y -= player.speed;
+            if (keys['s'] && player.y < canvas.height - player.size) player.y += player.speed;
+            if (keys['a'] && player.x > player.size) player.x -= player.speed;
+            if (keys['d'] && player.x < canvas.width - player.size) player.x += player.speed;
 
             if (player.invulnerable > 0) player.invulnerable--;
 
