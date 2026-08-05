@@ -12,7 +12,7 @@
             -webkit-touch-callout: none;
         }
         body {
-            background-color: #111;
+            background-color: #0b0b0b;
             color: #00ff66;
             font-family: 'Courier New', Courier, monospace;
             text-align: center;
@@ -40,14 +40,14 @@
             min-height: 220px;
             margin: 4px auto;
             border: 3px solid #ff3333;
-            background-color: #222;
+            background-color: #1a1a1a;
             box-shadow: 0 0 15px rgba(255, 51, 51, 0.4);
         }
         canvas {
             display: block;
             width: 100%;
             height: 100%;
-            background: #2a1515;
+            background: #111118;
         }
         .controls-wrapper {
             display: flex;
@@ -188,7 +188,7 @@
         let player = {
             x: 80,
             y: 200,
-            size: 20,
+            size: 22,
             speed: 4,
             hearts: 3,
             maxHearts: 3,
@@ -238,11 +238,11 @@
             projectiles.push({
                 x: player.x,
                 y: player.y,
-                dx: 7,
+                dx: 8,
                 dy: 0,
                 size: 8,
                 damage: 1 + player.extraDamage,
-                color: '#ffdd00',
+                color: '#ffff00',
                 isSpecial: false,
                 isBossWater: false
             });
@@ -254,7 +254,7 @@
                 y: player.y,
                 dx: 10,
                 dy: 0,
-                size: 20,
+                size: 22,
                 damage: 15,
                 color: '#00ffff',
                 isSpecial: true,
@@ -263,10 +263,10 @@
         }
 
         function getWorldBackground(w) {
-            if (w <= 5) return "#2a1515"; // Bagno
+            if (w <= 5) return "#221111"; // Bagno
             if (w <= 15) return "#330000"; // Inferno
-            if (w <= 25) return "#152530"; // Paradiso
-            return "#422814"; // Paradiso di Cacca
+            if (w <= 25) return "#102030"; // Paradiso
+            return "#3d2314"; // Paradiso di Cacca
         }
 
         function getWorldName(w) {
@@ -295,18 +295,18 @@
                     else if (Math.random() > 0.5) typeName = 'towel';
 
                     enemies.push({
-                        x: 350 + (i * 60) + Math.random() * 30,
+                        x: 350 + (i * 55) + Math.random() * 30,
                         y: 80 + Math.random() * 240,
                         size: 20,
                         type: typeName,
-                        speed: 0.7 + (worldNum * 0.05) + (roomNum * 0.02),
+                        speed: 0.8 + (worldNum * 0.04) + (roomNum * 0.02),
                         health: 2 + Math.floor(worldNum / 2)
                     });
                 }
             } else {
                 let bName = `Boss Mondo ${worldNum}`;
                 let bColor = "#ff0000";
-                let bHealth = 25 + (worldNum * 8);
+                let bHealth = 30 + (worldNum * 8);
                 let bSpeed = 4 + (worldNum * 0.1);
 
                 if (worldNum >= 6 && worldNum <= 15) {
@@ -316,7 +316,7 @@
                     bColor = "#00ffff";
                     bName = `Divinità Celeste #${worldNum - 15}`;
                 } else if (worldNum >= 26) {
-                    bColor = "#ffa500";
+                    bColor = "#ff9933";
                     bName = `Signore Cacca #${worldNum - 25}`;
                 }
 
@@ -324,7 +324,7 @@
                     name: bName,
                     x: 480,
                     y: 200,
-                    size: 38,
+                    size: 40,
                     health: bHealth,
                     maxHealth: bHealth,
                     shootSpeed: bSpeed,
@@ -447,7 +447,7 @@
 
             if (boss) {
                 boss.shootTimer++;
-                if (boss.shootTimer > 40) {
+                if (boss.shootTimer > 35) {
                     boss.shootTimer = 0;
                     let angle = Math.atan2(player.y - boss.y, player.x - boss.x);
                     projectiles.push({
@@ -490,12 +490,12 @@
         }
 
         function draw() {
-            // Sfondo dinamico pulito
+            // Sfondo fisso ben visibile
             ctx.fillStyle = getWorldBackground(currentWorld);
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // DISEGNO GIOCATORE (ANGELO)
-            ctx.fillStyle = player.invulnerable % 10 < 5 ? "#ffcc99" : "#ffffff";
+            // CORPO GIOCATORE (ANGELO)
+            ctx.fillStyle = player.invulnerable % 10 < 5 ? "#ffaa77" : "#ffffff";
             ctx.beginPath();
             ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
             ctx.fill();
@@ -503,10 +503,10 @@
             ctx.strokeStyle = "#ff0055";
             ctx.stroke();
 
-            // Occhio del giocatore
-            ctx.fillStyle = "#000";
+            // Occhio e dettagli giocatore
+            ctx.fillStyle = "#000000";
             ctx.beginPath();
-            ctx.arc(player.x + 6, player.y - 4, 3, 0, Math.PI * 2);
+            ctx.arc(player.x + 6, player.y - 4, 3.5, 0, Math.PI * 2);
             ctx.fill();
 
             // DISEGNO NEMICI
@@ -550,13 +550,13 @@
                 ctx.fillText(boss.name, boss.x - 80, boss.y - 48);
 
                 // Barra della vita del boss
-                ctx.fillStyle = "#333333";
-                ctx.fillRect(boss.x - 40, boss.y - 40, 80, 10);
+                ctx.fillStyle = "#222222";
+                ctx.fillRect(boss.x - 45, boss.y - 42, 90, 10);
                 ctx.fillStyle = "#00ff66";
-                ctx.fillRect(boss.x - 40, boss.y - 40, Math.max(0, (boss.health / boss.maxHealth) * 80), 10);
+                ctx.fillRect(boss.x - 45, boss.y - 42, Math.max(0, (boss.health / boss.maxHealth) * 90), 10);
                 ctx.lineWidth = 1;
                 ctx.strokeStyle = "#ffffff";
-                ctx.strokeRect(boss.x - 40, boss.y - 40, 80, 10);
+                ctx.strokeRect(boss.x - 45, boss.y - 42, 90, 10);
             }
 
-            // DISEGNO PROIETTI
+            
